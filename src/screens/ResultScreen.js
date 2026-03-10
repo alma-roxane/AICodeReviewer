@@ -1,57 +1,152 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import { theme } from '../theme';
+import ReviewSection from '../components/ReviewSection';
+import ScoreMeter from '../components/ScoreMeter';
 
-export default function ResultScreen({ navigation }) {
+// 🧪 Mock data to test UI — we'll replace with real AI data in Step 9
+const MOCK_REVIEW = {
+  score: 62,
+  bugs: [
+    'Missing null check on line 3 — could cause crash if input is undefined',
+    'Loop condition uses = instead of == causing infinite loop',
+  ],
+  improvements: [
+    'Consider using const instead of let for variables that never change',
+    'Extract repeated logic into a reusable helper function',
+    'Add input validation before processing user data',
+  ],
+  quality: [
+    'Good use of descriptive variable names',
+    'Add comments to explain complex logic blocks',
+    'Consider breaking this into smaller functions',
+  ],
+};
+
+export default function ResultScreen({ navigation, route }) {
+  // We'll use route.params later when real AI data comes in
+  const review = MOCK_REVIEW;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.emoji}>📊</Text>
-      <Text style={styles.title}>Results will appear here</Text>
-      <Text style={styles.subtitle}>AI review coming soon!</Text>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+    >
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.goBack()}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.buttonText}>← Go Back</Text>
-      </TouchableOpacity>
-    </View>
+      {/* Header */}
+      <View style={styles.headerArea}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>✅ Review Complete</Text>
+        </View>
+        <Text style={styles.title}>Here's what{'\n'}Claude found</Text>
+      </View>
+
+      {/* Score Meter */}
+      <ScoreMeter score={review.score} />
+
+      {/* Review Sections */}
+      <ReviewSection
+        icon="🐛"
+        title="Bugs Found"
+        items={review.bugs}
+        color={theme.colors.error}
+      />
+
+      <ReviewSection
+        icon="✨"
+        title="Improvements"
+        items={review.improvements}
+        color={theme.colors.warning}
+      />
+
+      <ReviewSection
+        icon="⭐"
+        title="Code Quality"
+        items={review.quality}
+        color={theme.colors.success}
+      />
+
+      {/* Action Buttons */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.primaryBtnText}>🔄 Review Another</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Footer */}
+      <Text style={styles.footer}>
+        Reviewed by Claude AI • Results may vary
+      </Text>
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.md,
   },
-  emoji: {
-    fontSize: 64,
+  container: {
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.lg,
+  },
+  headerArea: {
+    gap: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  badge: {
+    backgroundColor: theme.colors.success + '20',
+    borderWidth: 1,
+    borderColor: theme.colors.success,
+    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+  },
+  badgeText: {
+    color: theme.colors.success,
+    fontSize: theme.fontSize.sm,
+    fontWeight: '600',
   },
   title: {
     color: theme.colors.textPrimary,
-    fontSize: theme.fontSize.xl,
+    fontSize: theme.fontSize.xxl,
     fontWeight: 'bold',
     textAlign: 'center',
+    lineHeight: 36,
   },
-  subtitle: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.md,
+  actions: {
+    gap: theme.spacing.sm,
   },
-  button: {
-    marginTop: theme.spacing.lg,
-    backgroundColor: theme.colors.surfaceLight,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
+  primaryBtn: {
+    backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  buttonText: {
-    color: theme.colors.textPrimary,
+  primaryBtnText: {
+    color: '#FFFFFF',
     fontSize: theme.fontSize.md,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  footer: {
+    color: theme.colors.textMuted,
+    fontSize: theme.fontSize.xs,
+    textAlign: 'center',
   },
 });
