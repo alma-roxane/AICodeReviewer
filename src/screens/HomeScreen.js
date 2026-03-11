@@ -34,7 +34,7 @@ export default function HomeScreen({ navigation }) {
 
   const handleReview = () => {
     if (!code.trim()) return;
-    navigation.navigate('Result', { code, language: selectedLang });
+    navigation.navigate('Loading', { code, language: selectedLang });
   };
 
   const isReady = code.trim().length > 0;
