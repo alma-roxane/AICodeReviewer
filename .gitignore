@@ -14,5 +14,6 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-.env
+
 .env.local
+src/config.js

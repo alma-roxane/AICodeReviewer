@@ -1,5 +1,6 @@
-const CLAUDE_API_KEY = process.env.EXPO_PUBLIC_CLAUDE_API_KEY;
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+import { CONFIG } from '../config';
+const GROQ_API_KEY = CONFIG.GROQ_API_KEY;
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 const buildPrompt = (code, language) => {
   return `You are an expert code reviewer. Review the following ${language} code and provide structured feedback.
@@ -32,21 +33,25 @@ Respond with ONLY the JSON object:`;
 };
 
 export const reviewCode = async (code, language) => {
-  if (!CLAUDE_API_KEY) {
+  if (!GROQ_API_KEY) {
     throw new Error('API key not found. Check your .env file.');
   }
 
-  const response = await fetch(CLAUDE_API_URL, {
+  const response = await fetch(GROQ_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 1024,
+      temperature: 0.3,
       messages: [
+        {
+          role: 'system',
+          content: 'You are an expert code reviewer. Always respond with valid JSON only.',
+        },
         {
           role: 'user',
           content: buildPrompt(code, language),
@@ -61,9 +66,9 @@ export const reviewCode = async (code, language) => {
   }
 
   const data = await response.json();
-  const text = data.content[0].text.trim();
+  const text = data.choices[0].message.content.trim();
 
-  // Parse the JSON response
+  // Clean and parse JSON response
   const clean = text.replace(/```json|```/g, '').trim();
   const review = JSON.parse(clean);
 

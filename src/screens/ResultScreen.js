@@ -9,28 +9,92 @@ import { theme } from '../theme';
 import ReviewSection from '../components/ReviewSection';
 import ScoreMeter from '../components/ScoreMeter';
 
-// 🧪 Mock data to test UI — we'll replace with real AI data in Step 9
-const MOCK_REVIEW = {
-  score: 62,
-  bugs: [
-    'Missing null check on line 3 — could cause crash if input is undefined',
-    'Loop condition uses = instead of == causing infinite loop',
-  ],
-  improvements: [
-    'Consider using const instead of let for variables that never change',
-    'Extract repeated logic into a reusable helper function',
-    'Add input validation before processing user data',
-  ],
-  quality: [
-    'Good use of descriptive variable names',
-    'Add comments to explain complex logic blocks',
-    'Consider breaking this into smaller functions',
-  ],
-};
 
+function SummaryCard({ review }) {
+  const totalIssues = (review.bugs?.length ?? 0) +
+                      (review.improvements?.length ?? 0);
+  return (
+    <View style={summaryStyles.container}>
+      <View style={summaryStyles.stat}>
+        <Text style={[summaryStyles.statNumber,
+          { color: theme.colors.error }]}>
+          {review.bugs?.length ?? 0}
+        </Text>
+        <Text style={summaryStyles.statLabel}>Bugs</Text>
+      </View>
+      <View style={summaryStyles.divider} />
+      <View style={summaryStyles.stat}>
+        <Text style={[summaryStyles.statNumber,
+          { color: theme.colors.warning }]}>
+          {review.improvements?.length ?? 0}
+        </Text>
+        <Text style={summaryStyles.statLabel}>Improvements</Text>
+      </View>
+      <View style={summaryStyles.divider} />
+      <View style={summaryStyles.stat}>
+        <Text style={[summaryStyles.statNumber,
+          { color: theme.colors.success }]}>
+          {review.quality?.length ?? 0}
+        </Text>
+        <Text style={summaryStyles.statLabel}>Quality Tips</Text>
+      </View>
+    </View>
+  );
+}
+
+const summaryStyles = StyleSheet.create({
+  container: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    flexDirection: 'row',
+    padding: theme.spacing.md,
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statNumber: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: '800',
+  },
+  statLabel: {
+    color: theme.colors.textMuted,
+    fontSize: theme.fontSize.xs,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  divider: {
+    width: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.xs,
+  },
+});
 export default function ResultScreen({ navigation, route }) {
-  // We'll use route.params later when real AI data comes in
-  const review = MOCK_REVIEW;
+  const { review, error, language } = route.params;
+
+  // Handle error state
+  if (error || !review) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorEmoji}>⚠️</Text>
+        <Text style={styles.errorTitle}>Something went wrong</Text>
+        <Text style={styles.errorMessage}>
+          {error || 'Could not get AI review. Please try again.'}
+        </Text>
+        <TouchableOpacity
+          style={styles.retryBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.retryBtnText}>← Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -44,43 +108,46 @@ export default function ResultScreen({ navigation, route }) {
           <Text style={styles.badgeText}>✅ Review Complete</Text>
         </View>
         <Text style={styles.title}>Here's what{'\n'}Claude found</Text>
+        <Text style={styles.langTag}>
+          Language: {language?.toUpperCase()}
+        </Text>
       </View>
 
       {/* Score Meter */}
-      <ScoreMeter score={review.score} />
+      <ScoreMeter score={review.score ?? 0} />
+      <SummaryCard review={review} />
+
 
       {/* Review Sections */}
       <ReviewSection
         icon="🐛"
         title="Bugs Found"
-        items={review.bugs}
+        items={review.bugs ?? []}
         color={theme.colors.error}
       />
 
       <ReviewSection
         icon="✨"
         title="Improvements"
-        items={review.improvements}
+        items={review.improvements ?? []}
         color={theme.colors.warning}
       />
 
       <ReviewSection
         icon="⭐"
         title="Code Quality"
-        items={review.quality}
+        items={review.quality ?? []}
         color={theme.colors.success}
       />
 
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.primaryBtnText}>🔄 Review Another</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Action Button */}
+      <TouchableOpacity
+        style={styles.primaryBtn}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.primaryBtnText}>🔄 Review Another</Text>
+      </TouchableOpacity>
 
       {/* Footer */}
       <Text style={styles.footer}>
@@ -125,8 +192,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 36,
   },
-  actions: {
-    gap: theme.spacing.sm,
+  langTag: {
+    color: theme.colors.accent,
+    fontSize: theme.fontSize.sm,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   primaryBtn: {
     backgroundColor: theme.colors.primary,
@@ -148,5 +218,47 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontSize: theme.fontSize.xs,
     textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  errorEmoji: {
+    fontSize: 64,
+  },
+  errorTitle: {
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSize.xl,
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    color: theme.colors.error,
+    fontSize: theme.fontSize.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+    backgroundColor: theme.colors.error + '15',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.error + '40',
+    overflow: 'hidden',
+  },
+  retryBtn: {
+    backgroundColor: theme.colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+  },
+  retryBtnText: {
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSize.md,
+    fontWeight: '600',
   },
 });

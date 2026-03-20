@@ -1,24 +1,41 @@
-import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { StyleSheet, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LoadingReview from '../components/LoadingReview';
+import { reviewCode } from '../services/claudeService';
 import { theme } from '../theme';
 
 export default function LoadingScreen({ navigation, route }) {
   const { code, language } = route.params;
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
-    // Simulate AI processing for now — real API call comes in Step 9
-    const timer = setTimeout(() => {
-      navigation.replace('Result', {
-        code,
-        language,
-        // mock result for now
-        review: null,
-      });
-    }, 3500);
+    const callAI = async () => {
+      try {
+        const review = await reviewCode(code, language);
 
-    return () => clearTimeout(timer);
+        if (!hasNavigated.current) {
+          hasNavigated.current = true;
+          navigation.replace('Result', {
+            code,
+            language,
+            review,
+          });
+        }
+      } catch (error) {
+        if (!hasNavigated.current) {
+          hasNavigated.current = true;
+          navigation.replace('Result', {
+            code,
+            language,
+            review: null,
+            error: error.message,
+          });
+        }
+      }
+    };
+
+    callAI();
   }, []);
 
   return (
